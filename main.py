@@ -36,6 +36,10 @@ class Soldier(pygame.sprite.Sprite):
         self.frame_index = 0
         self.action = 0
         
+        ##############################
+        ########## ACTIONS ###########
+        ##############################
+
         ########## ACTION 0 ##########
 
         temp_list = []
@@ -57,6 +61,8 @@ class Soldier(pygame.sprite.Sprite):
             temp_list.append(img)
 
         self.animation_list.append(temp_list)
+
+        ##############################
 
         self.image = self.animation_list[self.action][self.frame_index]
 
