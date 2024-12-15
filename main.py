@@ -1,4 +1,5 @@
 import pygame
+import os
 
 pygame.init()
 
@@ -6,7 +7,10 @@ pygame.init()
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = int(SCREEN_WIDTH * 0.8)
 FPS = 60
+GRAVITY = 0.75
+# Colours
 BG = (144, 201, 120)
+RED = (255, 0,0)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Scrolling Shooter')
@@ -19,50 +23,51 @@ moving_right = False
 
 def draw_bg():
     screen.fill(BG)
+    pygame.draw.line(screen, RED, (0, 300), (SCREEN_WIDTH, 300))
 
 class Soldier(pygame.sprite.Sprite):
     def __init__(self, char_type, x, y, scale, speed):
         pygame.sprite.Sprite.__init__(self)
 
+        self.alive = True
+
+        # Jumping + Moving
         self.speed = speed
+        self.jump = False
+        self.vel_y = 0
+        self.in_air = False
         self.update_time = pygame.time.get_ticks()
 
         # Change direction if moving left or right
         self.direction = 1
         self.flip = False
 
-        # Soldier animations
+        ################################
+        ########## ANIMATIONS ##########
+        ################################
+
         self.animation_list = []
         self.frame_index = 0
         self.action = 0
         
-        ##############################
-        ########## ACTIONS ###########
-        ##############################
+        self.char_type = char_type
 
-        ########## ACTION 0 ##########
+        animation_types = ['Idle', 'Run', 'Jump'] # Load all images for the player
 
-        temp_list = []
+        for animation in animation_types:
+            temp_list = [] # Reset temp list
+            num_of_frames = len(os.listdir(f'img/{self.char_type}/{animation}')) # Count number of files in the animation folder
 
-        for i in range(5):
-            img = pygame.image.load(f'img/{char_type}/Idle/{i}.png')
-            img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
-            temp_list.append(img)
+            for i in range(num_of_frames):
+                img = pygame.image.load(f'img/{self.char_type}/{animation}/{i}.png')
+                img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+                temp_list.append(img)
 
-        self.animation_list.append(temp_list)
+            self.animation_list.append(temp_list)
 
-        ########## ACTION 1 ##########
-
-        temp_list = []
-
-        for i in range(6):
-            img = pygame.image.load(f'img/{char_type}/Run/{i}.png')
-            img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
-            temp_list.append(img)
-
-        self.animation_list.append(temp_list)
-
-        ##############################
+        ################################
+        ################################
+        ################################
 
         self.image = self.animation_list[self.action][self.frame_index]
 
@@ -83,6 +88,23 @@ class Soldier(pygame.sprite.Sprite):
             dx = self.speed
             self.flip = False
             self.direction = 1
+        
+        # Jump
+        if self.jump and not self.in_air:
+            self.vel_y = -11
+            self.jump = False
+            self.in_air = True
+
+        # Gravity
+        self.vel_y += GRAVITY
+        if self.vel_y > 10:
+            self.vel_y
+        dy += self.vel_y
+
+        # Check collision with floor
+        if self.rect.bottom + dy > 300:
+            dy = 300 - self.rect.bottom
+            self.in_air = False
 
         # Update rect position
         self.rect.x += dx
@@ -112,7 +134,7 @@ class Soldier(pygame.sprite.Sprite):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
 player = Soldier('player', 200, 200, 3, 5)
-enemy = Soldier('enemy', 400, 300, 3, 5)
+enemy = Soldier('enemy', 400, 200, 3, 5)
 
 run = True
 while run:
@@ -124,12 +146,15 @@ while run:
     player.update_animation()
     player.draw()
 
-    if moving_left or moving_right:
-        player.update_action(1) # Run
-    else:
-        player.update_action(0) # Idle
+    if player.alive:
+        if player.in_air:
+            player.update_action(2) # Jump
+        elif moving_left or moving_right:
+            player.update_action(1) # Run
+        else:
+            player.update_action(0) # Idle
     
-    player.move(moving_left, moving_right)
+        player.move(moving_left, moving_right)
 
     enemy.draw()    
 
@@ -142,6 +167,8 @@ while run:
                 moving_left = True
             if event.key == pygame.K_d:
                 moving_right = True
+            if event.key == pygame.K_SPACE and player.alive:
+                player.jump = True
             if event.key == pygame.K_ESCAPE:
                 run = False
         
