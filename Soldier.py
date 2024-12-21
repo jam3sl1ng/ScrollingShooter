@@ -1,20 +1,26 @@
 import pygame
 import os
 
+from Settings import *
+from Bullet import Bullet
+
 pygame.init()
 
 class Soldier(pygame.sprite.Sprite):
-    def __init__(self, char_type, x, y, scale, speed):
+    def __init__(self, char_type, x, y, scale, speed, ammo):
         pygame.sprite.Sprite.__init__(self)
 
         self.alive = True
 
-        # Jumping + Moving
+        # Jumping + Moving + Shooting
         self.speed = speed
         self.jump = False
         self.vel_y = 0
         self.in_air = False
         self.update_time = pygame.time.get_ticks()
+        self.shoot_cooldown = 0
+        self.ammo = ammo
+        self.start_ammo = ammo
 
         # Change direction if moving left or right
         self.direction = 1
@@ -37,7 +43,7 @@ class Soldier(pygame.sprite.Sprite):
             num_of_frames = len(os.listdir(f'img/{self.char_type}/{animation}')) # Count number of files in the animation folder
 
             for i in range(num_of_frames):
-                img = pygame.image.load(f'img/{self.char_type}/{animation}/{i}.png')
+                img = pygame.image.load(f'img/{self.char_type}/{animation}/{i}.png').convert_alpha()
                 img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
                 temp_list.append(img)
 
@@ -51,6 +57,13 @@ class Soldier(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+    
+    def update(self):
+        self.update_animation()
+
+        # Update cooldown
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= 1
     
     def move(self, moving_left, moving_right, gravity):
         # Reset moving variables
@@ -87,6 +100,14 @@ class Soldier(pygame.sprite.Sprite):
         # Update rect position
         self.rect.x += dx
         self.rect.y += dy
+    
+    def shoot(self, bullet_img):
+        if self.shoot_cooldown == 0 and self.ammo > 0:
+            self.shoot_cooldown = 20
+            bullet = Bullet(self.rect.centerx + (0.6 * self.rect.size[0] * self.direction), self.rect.centery, self.direction, bullet_img)
+            bullet_group.add(bullet)
+
+            self.ammo -= 1 # Reduce ammo
 
     def update_animation(self):
         # Update animation
