@@ -11,6 +11,8 @@ class Soldier(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         self.alive = True
+        self.health = 100
+        self.max_health = self.health
 
         # Jumping + Moving + Shooting
         self.speed = speed
@@ -36,7 +38,7 @@ class Soldier(pygame.sprite.Sprite):
         
         self.char_type = char_type
 
-        animation_types = ['Idle', 'Run', 'Jump'] # Load all images for the player
+        animation_types = ['Idle', 'Run', 'Jump', 'Death'] # Load all images for the player
 
         for animation in animation_types:
             temp_list = [] # Reset temp list
@@ -60,6 +62,7 @@ class Soldier(pygame.sprite.Sprite):
     
     def update(self):
         self.update_animation()
+        self.check_alive()
 
         # Update cooldown
         if self.shoot_cooldown > 0:
@@ -120,7 +123,10 @@ class Soldier(pygame.sprite.Sprite):
             self.frame_index += 1
         
         if self.frame_index >= len(self.animation_list[self.action]): # If the animation has finished reset it back to the start
-            self.frame_index = 0
+            if self.action == 3:
+                self.frame_index = len(self.animation_list[self.action]) - 1
+            else:
+                self.frame_index = 0
 
     def update_action(self, new_action):
         if new_action != self.action: # Check if new action is different to the previous one
@@ -128,6 +134,13 @@ class Soldier(pygame.sprite.Sprite):
             # Update animation settings
             self.frame_index = 0
             self.update_time = pygame.time.get_ticks()
+    
+    def check_alive(self):
+        if self.health <= 0:
+            self.health = 0
+            self.speed = 0
+            self.alive = False
+            self.update_action(3) # Death
 
     def draw(self, screen):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)

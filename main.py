@@ -25,7 +25,7 @@ def draw_bg():
     pygame.draw.line(screen, RED, (0, 300), (SCREEN_WIDTH, 300))
 
 player = Soldier('player', 200, 200, 3, 5, 5)
-enemy = Soldier('enemy', 400, 200, 3, 5, 5)
+enemy = Soldier('enemy', 400, 246, 3, 5, 5)
 
 run = True
 while run:
@@ -36,10 +36,12 @@ while run:
 
     player.update()
     player.draw(screen)
+
     enemy.draw(screen)
+    enemy.update()
 
     # Update and draw groups
-    bullet_group.update()
+    bullet_group.update(player, enemy)
     bullet_group.draw(screen)
 
     if player.alive:
